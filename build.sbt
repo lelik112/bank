@@ -19,10 +19,11 @@ lazy val `person-impl` = (project in file ("person-impl"))
   .settings(
     libraryDependencies ++= Seq(
       lagomScaladslPersistenceCassandra,
+      lagomScaladslKafkaBroker,
       macwire
     )
   )
-  .dependsOn(`person-api`)
+  .dependsOn(`person-api`, `card-api`)
 
 lazy val `card-api` = (project in file ("card-api"))
   .settings(

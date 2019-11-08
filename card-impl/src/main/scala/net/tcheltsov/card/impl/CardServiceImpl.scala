@@ -27,6 +27,7 @@ class CardServiceImpl(persistentEntityRegistry: PersistentEntityRegistry,
     }
     val ref = persistentEntityRegistry.refFor[CardEntity](UUID.randomUUID.toString)
     //TODO Get holder name from PersonService?
+    //TODO Check if person with holder Id persist?
     ref.ask(AddCardCommand(generateCard, request.holderId))
   }
 
@@ -35,26 +36,32 @@ class CardServiceImpl(persistentEntityRegistry: PersistentEntityRegistry,
     ref.ask(GetCardCommand(id))
   }
 
+  override def getBalance(id: String): ServiceCall[NotUsed, Double] = {_ =>
+    val ref = persistentEntityRegistry.refFor[CardEntity](id)
+    ref.ask(GetBalanceCommand(id))
+  }
+
   override def getCards: ServiceCall[NotUsed, Seq[Card]] = {_ =>
     cassandraSession
-      .selectAll("SELECT card FROM cards")
-      //TODO What right options are to do this?
-      .map(rows => rows.map(row => Card.cardFormat.reads(Json.parse(row.getString("card"))).get))
+    .selectAll("SELECT card FROM cards")
+    //TODO What right options are to do this?
+    .map(rows => rows.map(row => Card.cardFormat.reads(Json.parse(row.getString("card"))).get))
   }
 
   override def getUserCards(holderId: String): ServiceCall[NotUsed, Seq[Card]] = {_ =>
     cassandraSession
-      .selectAll(s"SELECT card FROM cards WHERE holderId = '$holderId'")
-      .map(rows => rows.map(row => Card.cardFormat.reads(Json.parse(row.getString("card"))).get))
+    .selectAll(s"SELECT card FROM cards WHERE holderId = '$holderId'")
+    .map(rows => rows.map(row => Card.cardFormat.reads(Json.parse(row.getString("card"))).get))
   }
 
   override def cardsTopic(): Topic[PersonCard] = {
     TopicProducer.singleStreamWithOffset {fromOffset =>
       persistentEntityRegistry
-        .eventStream(CardEvent.CardEventTag, fromOffset)
-        .filter(ev => ev.event.isInstanceOf[CardAddedEvent])
-        .map(ev => (PersonCard(ev.event.asInstanceOf[CardAddedEvent].holderId, ev.entityId), ev.offset))
+      .eventStream(CardEvent.CardEventTag, fromOffset)
+      .filter(ev => ev.event.isInstanceOf[CardAddedEvent])
+      .map(ev => (PersonCard(ev.event.asInstanceOf[CardAddedEvent].holderId, ev.entityId), ev.offset))
     }
   }
+
 }
 

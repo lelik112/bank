@@ -15,6 +15,7 @@ trait CardService extends Service {
 
   def addCard(): ServiceCall[AddCardRequest, AddCardResponse]
   def getCard(id: String): ServiceCall[NotUsed, Card]
+  def getBalance(id: String):ServiceCall[NotUsed, Double]
   def getCards: ServiceCall[NotUsed, Seq[Card]]
   def getUserCards(holderId: String): ServiceCall[NotUsed, Seq[Card]]
 
@@ -26,6 +27,7 @@ trait CardService extends Service {
       .withCalls(
         pathCall("/api/card", addCard _),
         pathCall("/api/card/:id", getCard _),
+        pathCall("/api/card/:id/balance", getBalance _),
         pathCall("/api/cards", getCards _),
         pathCall("/api/:holderId/cards", getUserCards _)
       )

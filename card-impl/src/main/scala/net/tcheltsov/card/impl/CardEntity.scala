@@ -21,7 +21,10 @@ class CardEntity extends PersistentEntity {
   }
 
   private val initial: Actions = Actions()
-    .onReadOnlyCommand[GetCardCommand, Card] {case (GetCardCommand(_), ctx, _) =>
+    .onReadOnlyCommand[GetCardCommand, Card] {case (_, ctx, _) =>
+      ctx.invalidCommand("Card with given Id is not persist")
+    }
+    .onReadOnlyCommand[GetBalanceCommand, Double] {case (_, ctx, _) =>
       ctx.invalidCommand("Card with given Id is not persist")
     }
     .onCommand[AddCardCommand, AddCardResponse]{case (AddCardCommand(card, holderId), ctx, _) =>
@@ -34,8 +37,11 @@ class CardEntity extends PersistentEntity {
     }
 
   private val cardAdded: Actions = Actions()
-    .onReadOnlyCommand[GetCardCommand, Card] {case (GetCardCommand(_), ctx, state) =>
+    .onReadOnlyCommand[GetCardCommand, Card] {case (_, ctx, state) =>
       ctx.reply(state.card.get)
+    }
+    .onReadOnlyCommand[GetBalanceCommand, Double] {case (_, ctx, state) =>
+      ctx.reply(state.balance)
     }
     .onCommand[AddCardCommand, AddCardResponse] {case (_, ctx, _) =>
       ctx.invalidCommand("Card with given Id was persist")
@@ -49,13 +55,15 @@ object CardSerializers {
     JsonSerializer(Json.format[CardState]),
     JsonSerializer(Json.format[AddCardCommand]),
     JsonSerializer(Json.format[CardAddedEvent]),
-    JsonSerializer(Json.format[GetCardCommand])
+    JsonSerializer(Json.format[GetCardCommand]),
+    JsonSerializer(Json.format[GetBalanceCommand])
   )
 }
 
 sealed trait CardCommand extends CardSerializers
 case class AddCardCommand(card: Card, holderId: String) extends CardCommand with ReplyType[AddCardResponse]
 case class GetCardCommand(id: String) extends CardCommand with ReplyType[Card]
+case class GetBalanceCommand(id: String) extends CardCommand with ReplyType[Double]
 
 sealed trait CardEvent extends AggregateEvent[CardEvent] with CardSerializers {
   override def aggregateTag: AggregateEventTagger[CardEvent] = CardEvent.CardEventTag
