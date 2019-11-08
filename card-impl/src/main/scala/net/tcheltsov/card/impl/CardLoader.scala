@@ -1,6 +1,6 @@
 package net.tcheltsov.card.impl
 
-import com.lightbend.lagom.scaladsl.api.ServiceLocator
+import com.lightbend.lagom.scaladsl.api.{Descriptor, ServiceLocator}
 import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraPersistenceComponents
@@ -19,6 +19,8 @@ class CardLoader  extends LagomApplicationLoader {
   override def loadDevMode(context: LagomApplicationContext): LagomApplication = {
     new CardApplication(context) with LagomDevModeComponents
   }
+
+  override def describeService: Option[Descriptor] = Some(readDescriptor[CardService])
 }
 
 abstract class CardApplication(context: LagomApplicationContext)
@@ -28,4 +30,5 @@ abstract class CardApplication(context: LagomApplicationContext)
   override lazy val lagomServer: LagomServer = serverFor[CardService](wire[CardServiceImpl])
   override lazy val jsonSerializerRegistry: JsonSerializerRegistry = CardSerializerRegistry
   persistentEntityRegistry.register(wire[CardEntity])
+  readSide.register(wire[CardEventProcessor])
 }

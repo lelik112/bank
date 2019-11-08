@@ -36,6 +36,7 @@ lazy val `card-impl` = (project in file ("card-impl"))
   .settings(
     libraryDependencies ++= Seq(
       lagomScaladslPersistenceCassandra,
+      lagomScaladslKafkaBroker,
       macwire
     )
   )

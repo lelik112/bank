@@ -1,6 +1,6 @@
 package net.tcheltsov.person.impl
 
-import com.lightbend.lagom.scaladsl.api.ServiceLocator
+import com.lightbend.lagom.scaladsl.api.{Descriptor, ServiceLocator}
 import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraPersistenceComponents
@@ -19,6 +19,8 @@ class PersonLoader extends LagomApplicationLoader{
   override def loadDevMode(context: LagomApplicationContext): LagomApplication = {
     new PersonApplication(context) with LagomDevModeComponents
   }
+
+  override def describeService: Option[Descriptor] = Some(readDescriptor[PersonService])
 }
 
 abstract class PersonApplication(context: LagomApplicationContext)

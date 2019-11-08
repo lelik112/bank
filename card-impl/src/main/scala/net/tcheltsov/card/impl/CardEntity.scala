@@ -1,6 +1,6 @@
 package net.tcheltsov.card.impl
 
-import com.lightbend.lagom.scaladsl.persistence.PersistentEntity
+import com.lightbend.lagom.scaladsl.persistence.{AggregateEvent, AggregateEventShards, AggregateEventTag, AggregateEventTagger, PersistentEntity}
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntity.ReplyType
 import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegistry}
 import net.tcheltsov.card.api.{AddCardResponse, Card}
@@ -57,7 +57,12 @@ sealed trait CardCommand extends CardSerializers
 case class AddCardCommand(card: Card, holderId: String) extends CardCommand with ReplyType[AddCardResponse]
 case class GetCardCommand(id: String) extends CardCommand with ReplyType[Card]
 
-sealed trait CardEvent extends CardSerializers
+sealed trait CardEvent extends AggregateEvent[CardEvent] with CardSerializers {
+  override def aggregateTag: AggregateEventTagger[CardEvent] = CardEvent.CardEventTag
+}
+object CardEvent {
+  val CardEventTag: AggregateEventTag[CardEvent] = AggregateEventTag[CardEvent]
+}
 case class CardAddedEvent(cardId: String, card: Card, holderId: String) extends CardEvent
 
 case class CardState(card: Option[Card], holderId: String, balance: Double) extends CardSerializers
