@@ -14,10 +14,10 @@ class PersonEntity extends PersistentEntity {
   override type Event = PersonEvent
   override type State = PersonState
 
-  override def initialState: PersonState = PersonState(None, Nil)
+  override def initialState: PersonState = EmptyPersonState
 
   override def behavior: Behavior = {
-    case PersonState(None, Nil) => initial
+    case EmptyPersonState => initial
     case _ => personAdded
   }
 
@@ -59,7 +59,7 @@ class PersonEntity extends PersistentEntity {
     }
     .onEvent {
       case (NameChangedEvent(newName), state) => PersonState(Some(newName), state.cards)
-      case (CardAddedEvent(cardId), state: State) => PersonState(state.name, cardId :: state.cards)
+      case (CardAddedEvent(cardId), state) => PersonState(state.name, cardId :: state.cards)
     }
 }
 
@@ -67,6 +67,7 @@ case class PersonState(name: Option[String], cards: List[String])
 object PersonState {
   implicit val format: Format[PersonState] = Json.format
 }
+object EmptyPersonState extends PersonState(None, Nil)
 
 sealed trait PersonCommand[R] extends ReplyType[R]
 case class PersonInfoCommand(personId: String) extends PersonCommand[PersonInfoResponse]

@@ -9,6 +9,7 @@ import com.lightbend.lagom.scaladsl.playjson.JsonSerializerRegistry
 import com.lightbend.lagom.scaladsl.server.{LagomApplication, LagomApplicationContext, LagomApplicationLoader, LagomServer}
 import com.softwaremill.macwire.wire
 import net.tcheltsov.card.api.CardService
+import net.tcheltsov.payment.api.PaymentService
 import play.api.libs.ws.ahc.AhcWSComponents
 
 class CardLoader  extends LagomApplicationLoader {
@@ -33,4 +34,5 @@ abstract class CardApplication(context: LagomApplicationContext)
   override lazy val jsonSerializerRegistry: JsonSerializerRegistry = CardSerializerRegistry
   persistentEntityRegistry.register(wire[CardEntity])
   readSide.register(wire[CardEventProcessor])
+  lazy val paymentService: PaymentService = serviceClient.implement[PaymentService]
 }

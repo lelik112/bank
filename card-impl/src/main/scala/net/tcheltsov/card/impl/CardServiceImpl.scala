@@ -3,21 +3,34 @@ package net.tcheltsov.card.impl
 import java.time.YearMonth
 import java.util.UUID
 
-import akka.NotUsed
+import akka.{Done, NotUsed}
+import akka.stream.scaladsl.Flow
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.broker.TopicProducer
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraSession
 import net.tcheltsov.card.api._
+import net.tcheltsov.payment.api.PaymentService
 import play.api.libs.json.Json
 
 import scala.concurrent.ExecutionContext
 
 class CardServiceImpl(persistentEntityRegistry: PersistentEntityRegistry,
-                      cassandraSession: CassandraSession)
+                      cassandraSession: CassandraSession,
+                      paymentService: PaymentService)
                      (implicit ec: ExecutionContext) extends CardService {
 
+  paymentService
+    .payTopic()
+    .subscribe
+    .atLeastOnce(
+      Flow.fromFunction {payment =>
+        val ref = persistentEntityRegistry.refFor[CardEntity](payment.cardId)
+        ref.ask(ChangeBalanceCommand(payment.paymentId, payment.amount))
+        Done
+      }
+    )
 
   override def addCard(): ServiceCall[AddCardRequest, AddCardResponse] = { request =>
     def generateLong: Long = Math.abs(scala.util.Random.nextLong())
@@ -57,9 +70,9 @@ class CardServiceImpl(persistentEntityRegistry: PersistentEntityRegistry,
   override def cardsTopic(): Topic[PersonCard] = {
     TopicProducer.singleStreamWithOffset {fromOffset =>
       persistentEntityRegistry
-      .eventStream(CardEvent.CardEventTag, fromOffset)
-      .filter(ev => ev.event.isInstanceOf[CardAddedEvent])
-      .map(ev => (PersonCard(ev.event.asInstanceOf[CardAddedEvent].holderId, ev.entityId), ev.offset))
+        .eventStream(CardEvent.CardEventTag, fromOffset)
+        .filter(ev => ev.event.isInstanceOf[CardAddedEvent])
+        .map(ev => (PersonCard(ev.event.asInstanceOf[CardAddedEvent].holderId, ev.entityId), ev.offset))
     }
   }
 
