@@ -93,7 +93,7 @@ sealed trait PersonEvent extends AggregateEvent[PersonEvent] {
 object PersonEvent {
   val Tag: AggregateEventTag[PersonEvent] = AggregateEventTag[PersonEvent]
 }
-case class NameChangedEvent(name: String) extends PersonEvent
+case class NameChangedEvent(newName: String) extends PersonEvent
 object NameChangedEvent {
   implicit val format: Format[NameChangedEvent] = Json.format
 }

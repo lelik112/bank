@@ -21,7 +21,7 @@ trait PaymentService extends Service {
     import Service._
     named("payment")
       .withCalls(
-        //TODO CChange to POST
+        //TODO Change to POST
         pathCall("/api/payment/:cardId/:amount", pay _),
       )
       .withTopics(
